@@ -44,4 +44,4 @@
  
 - Redo button: if you did not do any operation after the current one , it will show alert contains a message”No more redo” and if there were operation it will go  to last operation after the current operation
 
-- Visualize button: it show window contain visualization of our graph
+- Visualize button: it show window contain visualization of our graph.
