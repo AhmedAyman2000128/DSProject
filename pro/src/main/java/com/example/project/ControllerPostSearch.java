@@ -1,10 +1,12 @@
 package com.example.project;
 
+import com.example.project.Level2.GraphRepresentation.OurGraph;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -17,7 +19,10 @@ import java.util.ResourceBundle;
 
 public class ControllerPostSearch implements Initializable {
 
-
+    OurGraph graph;
+    void setGraph(OurGraph graph){
+        this.graph = graph;
+    }
     @FXML
     private Button exitBtn;
 
@@ -32,7 +37,17 @@ public class ControllerPostSearch implements Initializable {
 
     @FXML
     void search(MouseEvent event) {
-
+        if(fieldSearch.getText().equals("")){
+            Alert alert = new Alert(Alert.AlertType.WARNING,"Please enter word for search");
+            alert.show();
+        }
+        else{
+            String s = graph.searchPostsAndTopics(fieldSearch.getText());
+            if(s.length()==0){
+                s = "Not Found" ;
+            }
+            resultArea.setText(s);
+        }
     }
 
     @FXML

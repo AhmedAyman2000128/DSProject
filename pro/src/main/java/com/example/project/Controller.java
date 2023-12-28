@@ -1,7 +1,10 @@
 package com.example.project;
 
+import com.example.project.Level1.*;
 import com.example.project.Level1.Error.ErrorCheckAndCorrect;
-import com.example.project.Level1.FileClass;
+import com.example.project.Level1.Error.ErrorDetect;
+import com.example.project.Level1.compress_decompress.HuffmanEncoder;
+import com.example.project.Level2.GraphRepresentation.OurGraph;
 import com.example.project.Level2.Undo_Redo_Fun;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -16,18 +19,19 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
+import java.util.BitSet;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
 
     FileClass file;//created by me to include the file and its string representation
+    HuffmanEncoder encoder;
     FileChooser fileChooser;
     Undo_Redo_Fun undo_redo;
     boolean compressedFlag;
+    HuffmanEncoder.EncodedData compressed;
     @FXML
     private Button analysis;
     @FXML
@@ -96,7 +100,22 @@ public class Controller implements Initializable {
 
     @FXML
     void validateXml(MouseEvent event) {
-
+        if(file==null){
+            Alert alert = new Alert(Alert.AlertType.WARNING,"Please press Choose Button");
+            alert.show();
+        }
+        else{
+            ErrorDetect e = new ErrorDetect(file.getString());
+            e.checkerror();
+            Alert alert;
+            if(e.getErrorMsg().length()==0){
+                alert = new Alert(Alert.AlertType.WARNING,"No error found !");
+            }
+            else{
+                alert = new Alert(Alert.AlertType.WARNING,e.getErrorMsg());
+            }
+            alert.show();
+        }
     }
 
     @FXML
@@ -123,32 +142,144 @@ public class Controller implements Initializable {
 
     @FXML
     void indent(MouseEvent event) {
-
+        if(file==null){
+            Alert alert = new Alert(Alert.AlertType.WARNING,"Please press Choose Button");
+            alert.show();
+        }
+        else
+        {
+            ErrorCheckAndCorrect e = new ErrorCheckAndCorrect(file.getString());
+            Indentation i = new Indentation(e.getXmlAfterCorrection());
+            tBoxAfter.setText(i.getIntendedString());
+            undo_redo.addString(tBoxAfter.getText());
+        }
     }
 
     @FXML
     void convertToJson(MouseEvent event) {
-
+        if(file==null){
+            Alert alert = new Alert(Alert.AlertType.WARNING,"Please press Choose Button");
+            alert.show();
+        }
+        else {
+            //correct if there is any error
+            ErrorCheckAndCorrect e = new ErrorCheckAndCorrect(file.getString());
+            //convert to Json
+            Json json = new Json();
+            json.JsonConverter(e.getXmlAfterCorrection());
+            tBoxAfter.setText(json.getJsonstr());
+            undo_redo.addString(tBoxAfter.getText());
+        }
     }
 
     @FXML
     void minify(MouseEvent event) {
-
+        if(file==null){
+            Alert alert = new Alert(Alert.AlertType.WARNING,"Please press Choose Button");
+            alert.show();
+        }
+        else{
+            ErrorDetect e = new ErrorDetect(file.getString());
+            e.checkerror();
+            if(e.getErrorMsg().length()!=0){
+                Alert alert;
+                alert = new Alert(Alert.AlertType.WARNING,"file containing errors cannot manify!");
+                alert.show();
+            }
+            else {
+                Minifying m = new Minifying(file.getString());
+                tBoxAfter.setText(m.getManifiedString());
+                undo_redo.addString(tBoxAfter.getText());
+            }
+        }
     }
 
     @FXML
     void compressFile(MouseEvent event) throws IOException {
-
+        if(file!=null){
+            FileChooser.ExtensionFilter extFilter1;
+            extFilter1 = new FileChooser.ExtensionFilter("Text Files (*.txt)", "*.txt");
+            fileChooser.getExtensionFilters().addAll(extFilter1);
+            encoder = new HuffmanEncoder();
+            compressed = encoder.compress(file.getString());
+            File fileCompress = fileChooser.showSaveDialog(new Stage());
+            if(fileCompress != null){
+                compressedFlag = true;
+                encoder.writeCompressed(compressed,fileCompress);
+            }
+            fileChooser.getExtensionFilters().clear();
+        }
+        else{
+            Alert alert = new Alert(Alert.AlertType.WARNING,"No file is Chosen");
+            alert.show();
+        }
     }
 
     @FXML
     void decompressFile(MouseEvent event) throws IOException {
-
+        if(compressedFlag == true) {
+            FileChooser.ExtensionFilter extFilter1;
+            extFilter1 = new FileChooser.ExtensionFilter("Text Files (*.txt)", "*.txt");
+            fileChooser.getExtensionFilters().addAll(extFilter1);
+            File decompressFile = fileChooser.showOpenDialog(new Stage());
+            fileChooser.getExtensionFilters().clear();
+            if(decompressFile !=null){
+                FileInputStream fis = new FileInputStream(decompressFile);
+                byte[] b = new byte[fis.available()];
+                int chars = fis.read(b);
+                BitSet bs = BitSet.valueOf(b);
+                String binaryString = "";
+                for(int i = 0; i <= bs.size(); i++) {
+                    if(bs.get(i)) {
+                        binaryString += "1";
+                    } else {
+                        binaryString += "0";
+                    }
+                }
+                String decompressed = encoder.decompress(new HuffmanEncoder.EncodedData(compressed.getRoot(), binaryString ));
+                tBoxAfter.setText(decompressed);
+                undo_redo.addString(tBoxAfter.getText());
+                fis.close();
+            }
+            else{
+                Alert alert = new Alert(Alert.AlertType.WARNING,"No file chosen for decompress");
+                alert.show();
+            }
+        }
+        else{
+            Alert alert = new Alert(Alert.AlertType.WARNING,"Must compress the file first");
+            alert.show();
+        }
     }
 
     @FXML
     void saveFile(MouseEvent event) {
-
+        String k = tBoxAfter.getText();
+        if(!k.equals("")){
+            ErrorCheckAndCorrect f = new ErrorCheckAndCorrect(file.getString());
+            Json json = new Json();
+            json.JsonConverter(f.getXmlAfterCorrection());
+            FileChooser.ExtensionFilter extFilter1;
+            extFilter1 = new FileChooser.ExtensionFilter("Text Files (*.txt)", "*.txt");
+            fileChooser.getExtensionFilters().addAll(extFilter1);
+            File file2 = fileChooser.showSaveDialog(new Stage());
+            fileChooser.getExtensionFilters().clear();
+            if (file != null) {
+                try {
+                    // Create a PrintWriter to write to the file
+                    PrintWriter writer = new PrintWriter(file2);
+                    // Write the text to the file
+                    writer.println(k);
+                    // Close the PrintWriter
+                    writer.close();
+                } catch (Exception e) {
+                }
+            }
+        }
+        else{
+            Alert alert = new Alert(Alert.AlertType.WARNING,"Please use any function to create new file to save it!");
+            alert.show();
+        }
     }
 
     @FXML
@@ -177,12 +308,63 @@ public class Controller implements Initializable {
     //////////level2//////////
     @FXML
     void showAnalysis(MouseEvent event) throws IOException {
-
+        if(file==null){
+            Alert alert = new Alert(Alert.AlertType.WARNING,"Please press Choose Button");
+            alert.show();
+        }
+        else{
+            OurGraph graph = new OurGraph(file.getString());
+            if(analysisChoiceBox.getSelectionModel().getSelectedItem() == null){
+                Alert alert = new Alert(Alert.AlertType.WARNING,"Please choose type of Analysis");
+                alert.show();
+            }
+            else if(analysisChoiceBox.getSelectionModel().getSelectedItem().equals("Most influncer")){
+                String s = graph.get_most_influencer_user();
+                restLoadFxml("sampleRestOfGraph.fxml","Most influncer",s);
+            }
+            else if(analysisChoiceBox.getSelectionModel().getSelectedItem().equals("Most active")){
+                String s = graph.Mostactive();
+                restLoadFxml("sampleRestOfGraph.fxml","Most active",s);
+            }
+            else if(analysisChoiceBox.getSelectionModel().getSelectedItem().equals("Mutual Followers")){
+                FXMLLoader loader  = new FXMLLoader(getClass().getResource("sampleMutualFollower.fxml"));
+                Parent root = loader.load();
+                ControllerMutualFollower controller = loader.getController();
+                controller.setGraph(graph);
+                Stage stage = (Stage) analysis.getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage. setResizable(false);
+                stage.setTitle("Mutual Followers");
+                stage.setScene(scene);
+            }
+            else if(analysisChoiceBox.getSelectionModel().getSelectedItem().equals("Suggest Followers")){
+                String s = graph.SuggestionListForEach();
+                restLoadFxml("sampleRestOfGraph.fxml","Suggest Followers",s);
+            }
+            else if(analysisChoiceBox.getSelectionModel().getSelectedItem().equals("post Search")){
+                FXMLLoader loader  = new FXMLLoader(getClass().getResource("samplePostSearch.fxml"));
+                Parent root = loader.load();
+                ControllerPostSearch controller = loader.getController();
+                controller.setGraph(graph);
+                Stage stage = (Stage) analysis.getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage. setResizable(false);
+                stage.setTitle("post Search");
+                stage.setScene(scene);
+            }
+        }
     }
 
     @FXML
     void showVisualization(MouseEvent event) throws IOException {
-
+        if(file == null){
+            Alert alert = new Alert(Alert.AlertType.WARNING,"Please press Choose Button");
+            alert.show();
+        }
+        else{
+            Visualization v = new Visualization();
+            v.visualize(new Stage(),file.getString());
+        }
     }
     private void restLoadFxml(String sampleName,String functionName,String restName) throws IOException {
         FXMLLoader loader  = new FXMLLoader(getClass().getResource(sampleName));
