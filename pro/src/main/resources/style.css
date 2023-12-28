@@ -1,0 +1,15 @@
+graph { fill-color: #FFF, #BBB; fill-mode: gradient-radial; }
+
+node {
+    fill-color: white , rgb(255,10,10);
+    size: 30px, 30px;
+    shape : circle;
+    text-alignment: center;
+    text-style: bold;
+    text-size: 15px;
+    fill-mode: gradient-radial;
+
+}
+edge {
+    arrow-shape: arrow;
+}
