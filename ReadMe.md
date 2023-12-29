@@ -2,6 +2,11 @@
 
 ## **INTRO**
 * XML Visualization Project is a Scene Builder GUI application that allows the user to perform various operations on text input , such as validating, correcting, and compressing/decompressing XML and JSON files. It also provides functionality for loading and saving files, as well as a UI for displaying messages and prompts to the user. The code utilizes several helper functions defined in separate modules to perform these operations .
+ 
+# **Presentation Video** : [XML-Presentation](https://drive.google.com/drive/folders/1E7m9oC1iu4sYVctfhpzSBhZgVlks5EkI?usp=sharing)
+
+
+
 
 ### Note: 
 >Any change in the textbox as adding tags or removing tags must select text from the choice box  if not selected and press choose. 
